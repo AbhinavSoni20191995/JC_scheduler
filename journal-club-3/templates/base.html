@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ lab_name }} · Journal Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,700;1,500&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="{{ url_for('index') }}">
+    <span class="brand-mark">JC</span>
+    <span class="brand-text">{{ lab_name }}<em>Fridays, one paper at a time</em></span>
+  </a>
+  <nav>
+    <a href="{{ url_for('index') }}">Schedule</a>
+    {% if session.get('admin') %}
+      <a href="{{ url_for('admin') }}">Admin</a>
+      <a href="{{ url_for('logout') }}">Log out</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Admin</a>
+    {% endif %}
+  </nav>
+</header>
+
+{% with msgs = get_flashed_messages() %}
+  {% if msgs %}
+    <div class="flash">{% for m in msgs %}<p>{{ m }}</p>{% endfor %}</div>
+  {% endif %}
+{% endwith %}
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+<footer class="site-foot">
+  Journal Club Scheduler · free for academic and personal use ·
+  commercial use not permitted (see LICENSE)
+</footer>
+</body>
+</html>
