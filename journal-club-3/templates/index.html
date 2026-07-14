@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% macro cell(s) %}
+  {% if s %}
+    <a class="who" href="{{ url_for('session_view', sid=s.id) }}">{{ s.speaker_name or '—' }}</a>
+    {% if s.status == 'needs_swap' %}<span class="chip chip-swap">volunteer needed</span>
+    {% elif s.status == 'cancelled' %}<span class="chip chip-off">cancelled</span>
+      {% if s.unavailable_comment %}<small class="dim">{{ s.unavailable_comment }}</small>{% endif %}
+    {% endif %}
+    {% if s.paper_title %}
+      <div class="paper">
+        {% if s.paper_link %}<a href="{{ s.paper_link }}" target="_blank" rel="noopener">{{ s.paper_title }}</a>
+        {% else %}{{ s.paper_title }}{% endif %}
+      </div>
+    {% endif %}
+    {% if s.speaker_note %}<div class="note">{{ s.speaker_note }}</div>{% endif %}
+  {% else %}<span class="dim">—</span>{% endif %}
+{% endmacro %}
+
+{% block content %}
+
+{% if next_day %}
+{% set pair = upcoming[next_day] %}
+<section class="next-card">
+  <p class="eyebrow">Next lab Friday</p>
+  <h1><span class="hl">Friday {{ next_day }}</span></h1>
+  <p class="next-speaker">
+    {% if pair.jc and pair.jc.status != 'cancelled' %}
+      Journal club: <strong>{{ pair.jc.speaker_name or 'TBA' }}</strong>
+      {% if pair.jc.status == 'needs_swap' %}<span class="chip chip-swap">volunteer needed</span>{% endif %}
+    {% endif %}
+    {% if pair.progress and pair.progress.status != 'cancelled' %}
+      &nbsp;·&nbsp; Progress report: <strong>{{ pair.progress.speaker_name or 'TBA' }}</strong>
+      {% if pair.progress.status == 'needs_swap' %}<span class="chip chip-swap">volunteer needed</span>{% endif %}
+    {% endif %}
+  </p>
+  {% if pair.jc and pair.jc.paper_title %}
+    <p class="next-paper">
+      {% if pair.jc.paper_link %}<a href="{{ pair.jc.paper_link }}" target="_blank" rel="noopener">{{ pair.jc.paper_title }}</a>
+      {% else %}{{ pair.jc.paper_title }}{% endif %}
+    </p>
+  {% endif %}
+</section>
+{% else %}
+<section class="next-card">
+  <p class="eyebrow">Lab Fridays</p>
+  <h1>No sessions scheduled yet</h1>
+  <p>The admin can generate the Friday schedule from the admin page.</p>
+</section>
+{% endif %}
+
+<p class="howto">Presenting soon? Click your name to add your paper or topic —
+or to hit <strong>“I'm not available”</strong> if you can't make it, which asks
+the lab for a volunteer automatically.</p>
+
+<section>
+  <h2>Upcoming Fridays</h2>
+  {% if upcoming %}
+  <table class="sched two-track">
+    <thead>
+      <tr><th>Date</th><th>Journal club</th><th>Progress report</th></tr>
+    </thead>
+    <tbody>
+    {% for day, pair in upcoming.items() %}
+      <tr>
+        <td class="mono">{{ day }}</td>
+        <td>{{ cell(pair.jc) }}</td>
+        <td>{{ cell(pair.progress) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="dim">Nothing scheduled.</p>{% endif %}
+</section>
+
+{% if past %}
+<section>
+  <h2>Past Fridays</h2>
+  <table class="sched two-track past">
+    <thead><tr><th>Date</th><th>Journal club</th><th>Progress report</th></tr></thead>
+    <tbody>
+    {% for day, pair in past.items() %}
+      <tr>
+        <td class="mono">{{ day }}</td>
+        <td>{{ cell(pair.jc) }}</td>
+        <td>{{ cell(pair.progress) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% endblock %}
