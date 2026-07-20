@@ -1,0 +1,158 @@
+/* Journal Club Scheduler — paper, ink, and a highlighter stroke */
+:root {
+  --paper: #FBFAF6;
+  --ink: #22303A;
+  --ink-soft: #5B6B76;
+  --line: #E3E0D6;
+  --teal: #0E6E63;
+  --teal-dark: #0A5249;
+  --hl: #FFE873;         /* the highlighter */
+  --amber: #B45309;
+  --amber-bg: #FDF3E3;
+  --off: #97A1A8;
+  --off-bg: #F0EFEA;
+  --ok-bg: #E4F2EE;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.55 "Public Sans", system-ui, sans-serif;
+}
+main { max-width: 1000px; margin: 0 auto; padding: 1rem 1.25rem 3rem; }
+h1, h2 { font-family: "Spectral", Georgia, serif; }
+h1 { font-size: 2.1rem; font-weight: 700; margin: .2rem 0 .4rem; }
+h2 { font-size: 1.25rem; font-weight: 700; margin: 1.6rem 0 .6rem; }
+a { color: var(--teal); }
+small, .dim { color: var(--ink-soft); }
+.mono { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* header */
+.site-head {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1000px; margin: 0 auto; padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; gap: .7rem; align-items: center; text-decoration: none; color: var(--ink); }
+.brand-mark {
+  font-family: "Spectral", serif; font-weight: 700; font-size: 1.1rem;
+  background: var(--ink); color: var(--paper);
+  padding: .35rem .5rem; border-radius: 4px;
+}
+.brand-text { font-family: "Spectral", serif; font-weight: 700; line-height: 1.15; }
+.brand-text em { display: block; font: italic 0.78rem "Spectral", serif; color: var(--ink-soft); }
+.site-head nav a { margin-left: 1.1rem; text-decoration: none; font-weight: 600; color: var(--ink); }
+.site-head nav a:hover { color: var(--teal); }
+
+/* the signature: next-session card with a highlighter stroke */
+.next-card { padding: 1.6rem 0 .6rem; }
+.eyebrow {
+  text-transform: uppercase; letter-spacing: .14em; font-size: .72rem;
+  font-weight: 700; color: var(--teal); margin: 0;
+}
+.hl {
+  background: linear-gradient(104deg, transparent 0 2%, var(--hl) 3% 97%, transparent 98%);
+  padding: 0 .35rem;
+}
+.next-speaker { font-size: 1.05rem; margin: .3rem 0; }
+.next-paper { font-family: "Spectral", serif; font-style: italic; font-size: 1.05rem; }
+
+/* tables */
+table.sched { width: 100%; border-collapse: collapse; margin: .4rem 0 1rem; }
+.sched th {
+  text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-soft); border-bottom: 2px solid var(--ink); padding: .45rem .55rem;
+}
+.sched td { border-bottom: 1px solid var(--line); padding: .55rem; vertical-align: top; }
+.sched.past td { color: var(--ink-soft); }
+.row-cancelled td { color: var(--off); }
+.note-cell { font-style: italic; color: var(--ink-soft); max-width: 220px; }
+
+/* chips */
+.chip {
+  display: inline-block; font-size: .72rem; font-weight: 700;
+  padding: .12rem .5rem; border-radius: 999px; white-space: nowrap;
+}
+.chip-ok   { background: var(--ok-bg); color: var(--teal-dark); }
+.chip-swap { background: var(--amber-bg); color: var(--amber); }
+.chip-off  { background: var(--off-bg); color: var(--off); }
+
+/* panels & forms */
+.panel {
+  background: #fff; border: 1px solid var(--line); border-radius: 8px;
+  padding: 1rem 1.2rem 1.2rem; margin: 1rem 0;
+}
+.panel.warn { border-color: #EED9B8; background: #FFFDF6; }
+.panel.narrow { max-width: 380px; margin: 3rem auto; }
+.panel h2 { margin-top: .2rem; }
+.stack { display: flex; flex-direction: column; gap: .7rem; }
+.stack label { display: flex; flex-direction: column; gap: .25rem; font-weight: 600; font-size: .9rem; }
+input, select, textarea {
+  font: inherit; padding: .5rem .6rem; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--paper); color: var(--ink); width: 100%;
+}
+input:focus, select:focus, textarea:focus, .btn:focus {
+  outline: 2px solid var(--teal); outline-offset: 1px;
+}
+.btn {
+  font: 700 .9rem "Public Sans", sans-serif; cursor: pointer;
+  background: var(--teal); color: #fff; border: 0; border-radius: 6px;
+  padding: .55rem 1rem; align-self: flex-start; text-decoration: none; display: inline-block;
+}
+.btn:hover { background: var(--teal-dark); }
+.btn-warn { background: var(--amber); }
+.btn-warn:hover { background: #92400E; }
+.btn-quiet { background: transparent; color: var(--teal); border: 1px solid var(--line); }
+.btn-quiet:hover { background: var(--off-bg); }
+.link { font-weight: 600; }
+.row-forms { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.row-forms input { width: auto; }
+
+/* admin grid */
+.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.admin-grid .panel { margin: 0; }
+.admin-grid .wide { grid-column: 1 / -1; }
+@media (max-width: 800px) { .admin-grid { grid-template-columns: 1fr; } }
+
+/* flash */
+.flash {
+  max-width: 1000px; margin: .8rem auto 0; padding: .6rem 1.25rem;
+  background: var(--ok-bg); color: var(--teal-dark); border-radius: 6px;
+}
+.flash p { margin: .2rem 0; }
+.warn-flash { background: var(--amber-bg); color: var(--amber); }
+
+.site-foot {
+  max-width: 1000px; margin: 0 auto; padding: 1.2rem;
+  border-top: 1px solid var(--line); color: var(--ink-soft); font-size: .8rem;
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* two-track schedule */
+.two-track td { min-width: 120px; }
+.two-track .who { font-weight: 600; text-decoration: none; color: var(--ink); }
+.two-track .who:hover { color: var(--teal); text-decoration: underline; }
+.two-track .paper { font-family: "Spectral", serif; font-style: italic; font-size: .92rem; margin-top: .15rem; }
+.two-track .note { font-size: .85rem; color: var(--ink-soft); font-style: italic; }
+.howto {
+  background: var(--ok-bg); border-radius: 6px; padding: .6rem .9rem;
+  font-size: .9rem; color: var(--teal-dark);
+}
+.btn-tiny { padding: .1rem .35rem; font-size: .7rem; line-height: 1; }
+.order-btns { white-space: nowrap; }
+.order-btns form { display: inline; }
+
+/* schedule change indicators & beer tab */
+.chip-changed { background: #EAE4F7; color: #5B3E96; }
+.beer { margin-left: .25rem; font-size: .9rem; letter-spacing: -2px; }
+.quick { display: inline-flex; gap: .2rem; align-items: center; margin-top: .25rem; }
+.quick form { display: inline; }
+.quick select {
+  width: auto; max-width: 130px; padding: .1rem .2rem; font-size: .75rem;
+  border-radius: 4px; background: #fff;
+}
+.chip-once { background: #FDEBD3; color: #92600A; }
+.meeting-info { font-size: .95rem; color: var(--ink-soft); margin: .2rem 0 .5rem; }
+.meeting-info a { font-weight: 600; }
