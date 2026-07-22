@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="next-card">
+  <p class="eyebrow">Shared by the lab</p>
+  <h1><span class="hl">Resources</span></h1>
+  <p class="dim">Useful links, tools, tutorials, courses — anything worth sharing.
+     Add tags so others can find it, upvote what's useful, and discuss in the comments.</p>
+</section>
+
+<div class="library-layout">
+
+  <aside class="panel lib-add">
+    <h2>Post a resource</h2>
+    <form method="post" action="{{ url_for('resources_add') }}" class="stack">
+      <label>Title <input name="title" required maxlength="300" placeholder="What is it?"></label>
+      <label>Link <input name="link" maxlength="500" placeholder="https://…"></label>
+      <label>Description <small>(optional)</small>
+        <textarea name="body" rows="3" maxlength="2000" placeholder="Why it's useful"></textarea></label>
+      <label>Tags <small>(comma-separated, required)</small>
+        <input name="tags" required maxlength="200" placeholder="bioinformatics, phd training"></label>
+      <label>Your name <input name="posted_by" maxlength="80" placeholder="optional"></label>
+      <button class="btn">Post resource</button>
+    </form>
+  </aside>
+
+  <main class="lib-main">
+    <form method="get" action="{{ url_for('resources') }}" class="row-forms lib-search">
+      <input name="q" value="{{ q }}" placeholder="search title, tag, person…">
+      <input type="hidden" name="tag" value="{{ tag }}">
+      <select name="sort" onchange="this.form.submit()">
+        <option value="recent" {% if sort=='recent' %}selected{% endif %}>Newest first</option>
+        <option value="votes"  {% if sort=='votes' %}selected{% endif %}>Most upvoted</option>
+        <option value="oldest" {% if sort=='oldest' %}selected{% endif %}>Oldest first</option>
+      </select>
+      <button class="btn btn-quiet">Search</button>
+      {% if q or tag %}<a class="link" href="{{ url_for('resources') }}">clear</a>{% endif %}
+    </form>
+
+    {% if tag_list %}
+    <div class="tag-cloud">
+      <span class="dim">Tags:</span>
+      {% for t, n in tag_list %}
+        <a class="tag {% if t == tag %}tag-active{% endif %}"
+           href="{{ url_for('resources', tag=t, q=q) }}">{{ t }} <small>{{ n }}</small></a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if tag %}<p class="dim">Showing resources tagged <strong>{{ tag }}</strong>.</p>{% endif %}
+
+    {% if not items %}
+      <p class="dim">{% if q or tag %}No resources match.{% else %}No resources yet — post the first one.{% endif %}</p>
+    {% else %}
+      {% for it in items %}
+      <div class="panel res-item">
+        <div class="res-title">
+          {% if it.link %}<a href="{{ it.link }}" target="_blank" rel="noopener">{{ it.title }}</a>
+          {% else %}{{ it.title }}{% endif %}
+        </div>
+        {% if it.body %}<div class="res-body">{{ it.body|simpletext }}</div>{% endif %}
+        <div class="res-tags">
+          {% for t in it.tags.split(',') %}{% if t.strip() %}
+            <a class="tag" href="{{ url_for('resources', tag=t.strip()) }}">{{ t.strip() }}</a>
+          {% endif %}{% endfor %}
+        </div>
+        <div class="lib-meta dim">
+          posted by <strong>{{ it.posted_by or '—' }}</strong> · <span class="mono">{{ it.created_at|replace('T',' ') }}</span>
+          <form method="post" action="{{ url_for('resources_delete', res_id=it.id) }}" class="inline-form">
+            <input type="hidden" name="posted_by" value="{{ it.posted_by }}">
+            <button class="btn btn-quiet btn-tiny" title="Remove (poster or admin)"
+                    onclick="return confirm('Remove this resource?')">✕</button>
+          </form>
+        </div>
+        {% set tt = 'resource' %}{% set obj = it %}{% include '_social.html' %}
+      </div>
+      {% endfor %}
+    {% endif %}
+  </main>
+
+</div>
+{% endblock %}
