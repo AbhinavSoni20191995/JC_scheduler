@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="next-card">
+  <p class="eyebrow">Fairness</p>
+  <h1><span class="hl">Presentation stats</span></h1>
+  <p class="dim">Who has presented, who's coming up, and who missed out. Use the
+     end-of-round tally to give people who didn't present a boost next round.</p>
+</section>
+
+<div class="stats-tabs">
+  <a href="{{ url_for('stats', view='jc') }}" class="tab {% if view=='jc' %}tag-active{% endif %}">Journal club</a>
+  <a href="{{ url_for('stats', view='progress') }}" class="tab {% if view=='progress' %}tag-active{% endif %}">Progress report</a>
+  <a href="{{ url_for('stats', view='both') }}" class="tab {% if view=='both' %}tag-active{% endif %}">Combined</a>
+</div>
+
+<table class="sched stats-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th title="Past, non-cancelled">Presented</th>
+      <th title="Upcoming assigned">Upcoming</th>
+      <th title="Sessions they had to cancel">Cancelled</th>
+      <th title="Extra turns owed next round">Priority</th>
+      {% if session.get('admin') %}<th></th>{% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr class="{% if not r.active %}row-cancelled{% endif %}">
+      <td>{{ r.name }}
+        {% if r.once_only %}<span class="chip chip-once" title="Presents only once per track">once only</span>{% endif %}
+        {% if not r.active %}<span class="chip chip-off">paused</span>{% endif %}
+      </td>
+      <td class="mono">{{ r.presented }}</td>
+      <td class="mono">{{ r.upcoming }}</td>
+      <td class="mono">{{ r.cancelled if r.cancelled else '—' }}</td>
+      <td class="mono">{% if r.priority %}<span class="chip chip-swap">+{{ r.priority }}</span>{% else %}—{% endif %}</td>
+      {% if session.get('admin') %}
+      <td class="row-forms">
+        <form method="post" action="{{ url_for('admin_priority') }}">
+          <input type="hidden" name="id" value="{{ r.id }}"><input type="hidden" name="delta" value="1"><input type="hidden" name="view" value="{{ view }}">
+          <button class="btn btn-quiet btn-tiny" title="Give one extra turn next round">+ boost</button>
+        </form>
+        {% if r.priority %}
+        <form method="post" action="{{ url_for('admin_priority') }}">
+          <input type="hidden" name="id" value="{{ r.id }}"><input type="hidden" name="delta" value="-1"><input type="hidden" name="view" value="{{ view }}">
+          <button class="btn btn-quiet btn-tiny" title="Remove one">− </button>
+        </form>
+        {% endif %}
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if view == 'both' %}
+<p class="dim">Combined = journal club + progress report. Switch tabs above to see
+   each track separately. "Once only" people are shown but excluded from boosts.</p>
+{% endif %}
+
+{% if session.get('admin') %}
+<section class="panel admin-box">
+  <h2>End of semester / quarter</h2>
+  <p>Run the tally to prepare the next round. Anyone active (not "once only")
+     who didn't present at all this round — or who had to cancel — gets a
+     priority boost so they present <strong>more often and earlier</strong> next
+     round. People who presented reset to no boost. This doesn't change the
+     current schedule; it takes effect when you next generate or rebuild.</p>
+  <form method="post" action="{{ url_for('admin_semester') }}" class="row-forms"
+        onsubmit="return confirm('Prepare a new round? This recomputes everyone\\'s priority based on this round.')">
+    <label>New round starts on/after <small>(optional)</small>
+      <input type="date" name="start_date"></label>
+    <button class="btn">Run end-of-round tally</button>
+  </form>
+  <p class="dim">After running: review the Priority column, adjust with + / − if
+     needed, then use <strong>Rebuild future schedule</strong> on the admin page
+     to apply the new order.</p>
+</section>
+{% endif %}
+
+{% endblock %}
