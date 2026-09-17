@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="next-card">
+  <p class="eyebrow">Talent pool</p>
+  <h1><span class="hl">Interns &amp; masters</span></h1>
+  <p class="dim">Prospective students looking to join. Active offers stay listed;
+     the lab gets a digest once a month. If you're interested in someone, say so
+     and the coordinator takes it from there.</p>
+</section>
+
+{% if not coordinator %}
+<div class="flash warn-flash"><p>No coordinator email is set yet, so "interested"
+  clicks won't notify anyone. An admin can set one in the admin settings.</p></div>
+{% endif %}
+
+<div class="library-layout">
+
+  <aside class="panel lib-add">
+    <h2>Add a candidate</h2>
+    <form method="post" action="{{ url_for('candidates_add') }}" class="stack">
+      <label>Name <input name="name" required maxlength="120"></label>
+      <label>Type
+        <select name="kind">
+          {% for k in kinds %}<option value="{{ k }}">{{ kind_labels[k] }}</option>{% endfor %}
+        </select></label>
+      <label>Available from <input name="start_date" maxlength="60" placeholder="e.g. 2026-05 or ASAP"></label>
+      <label>Offer expires <small>(after this date it drops off the active list)</small>
+        <input name="expiry_date" type="date"></label>
+      <label>Main skills <input name="skills" maxlength="400" placeholder="e.g. R, scRNA-seq, flow cytometry"></label>
+      <label>Profile <textarea name="profile" rows="3" maxlength="2000" placeholder="short bio / background"></textarea></label>
+      <label>CV link <input name="cv_link" maxlength="500" placeholder="https://drive… (optional)"></label>
+      <label>Candidate contact <input name="contact" maxlength="120" placeholder="their email (optional)"></label>
+      <label>Your name <input name="posted_by" maxlength="80" placeholder="who's posting (optional)"></label>
+      <button class="btn">Add candidate</button>
+    </form>
+  </aside>
+
+  <main class="lib-main">
+    <form method="get" action="{{ url_for('candidates') }}" class="row-forms lib-search">
+      <input name="q" value="{{ q }}" placeholder="search name, skills, profile…">
+      {% if show_expired %}<input type="hidden" name="expired" value="1">{% endif %}
+      <button class="btn btn-quiet">Search</button>
+      {% if q %}<a class="link" href="{{ url_for('candidates', expired='1' if show_expired else '') }}">clear</a>{% endif %}
+    </form>
+
+    <p class="dim">
+      {% if show_expired %}Showing all, including expired offers.
+        <a class="link" href="{{ url_for('candidates', q=q) }}">hide expired</a>
+      {% else %}Showing active offers.
+        {% if expired_count %}<a class="link" href="{{ url_for('candidates', q=q, expired='1') }}">show {{ expired_count }} expired</a>{% endif %}
+      {% endif %}
+    </p>
+
+    {% if not items %}
+      <p class="dim">{% if q %}No candidates match.{% else %}No candidates yet — add the first on the left.{% endif %}</p>
+    {% else %}
+      {% for c in items %}
+      <div class="panel cand-item {% if c.expired %}cand-expired{% endif %}">
+        <div class="cand-head">
+          <strong class="cand-name">{{ c.name }}</strong>
+          <span class="chip chip-once">{{ kind_labels[c.kind] }}</span>
+          {% if c.expired %}<span class="chip chip-off">offer expired</span>
+          {% else %}<span class="chip chip-ok">available</span>{% endif %}
+        </div>
+        <div class="cand-meta dim">
+          {% if c.start_date %}from {{ c.start_date }}{% endif %}
+          {% if c.expiry_date %} · offer until {{ c.expiry_date }}{% endif %}
+          {% if c.posted_by %} · posted by {{ c.posted_by }}{% endif %}
+        </div>
+        {% if c.skills %}<div class="cand-skills"><strong>Skills:</strong> {{ c.skills }}</div>{% endif %}
+        {% if c.profile %}<div class="cand-profile">{{ c.profile }}</div>{% endif %}
+        <div class="cand-links">
+          {% if c.cv_link %}<a class="link" href="{{ c.cv_link }}" target="_blank" rel="noopener">CV ↗</a>{% endif %}
+          {% if c.contact and session.get('admin') %}<span class="dim">· {{ c.contact }}</span>{% endif %}
+        </div>
+
+        {% if c.interested %}
+          <div class="cand-interest dim">Interested: {{ c.interested|join(', ') }}</div>
+        {% endif %}
+
+        <div class="row-forms cand-actions">
+          <form method="post" action="{{ url_for('candidates_interest', cid=c.id) }}" class="row-forms">
+            <input name="person" placeholder="your name" maxlength="80" required>
+            <input name="note" placeholder="note (optional)" maxlength="300">
+            <button class="btn btn-quiet">I'm interested</button>
+          </form>
+          <form method="post" action="{{ url_for('candidates_delete', cid=c.id) }}" class="inline-form"
+                onsubmit="return confirm('Remove this candidate?')">
+            <input type="hidden" name="posted_by" value="{{ c.posted_by }}">
+            <button class="btn btn-quiet btn-tiny" title="Remove (poster or admin)">✕</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </main>
+
+</div>
+{% endblock %}

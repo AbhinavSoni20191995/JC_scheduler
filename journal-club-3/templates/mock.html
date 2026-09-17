@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% macro cell(s) %}
+  {% if s %}
+    <span class="who {% if s.status == 'cancelled' %}who-cancelled{% endif %}">{{ s.speaker_name or '—' }}</span>
+    {% if s.status == 'cancelled' %}<span class="chip chip-off">✕ cancelled</span>
+      {% if s.unavailable_comment %}<small class="dim">{{ s.unavailable_comment }}</small>{% endif %}
+    {% endif %}
+    <span class="quick">
+      <form method="post" action="{{ url_for('mock_edit', mid=s.id) }}">
+        <input type="hidden" name="action" value="set">
+        <select name="speaker_id" onchange="this.form.submit()" title="Change speaker">
+          <option value="" disabled {% if not s.speaker_id %}selected{% endif %}>…</option>
+          {% for p in people %}<option value="{{ p.id }}" {% if p.id == s.speaker_id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+        </select>
+      </form>
+      <form method="post" action="{{ url_for('mock_edit', mid=s.id) }}">
+        <input type="hidden" name="action" value="shift"><input type="hidden" name="dir" value="up">
+        <button class="btn btn-quiet btn-tiny" title="Swap with previous Friday">▲</button>
+      </form>
+      <form method="post" action="{{ url_for('mock_edit', mid=s.id) }}">
+        <input type="hidden" name="action" value="shift"><input type="hidden" name="dir" value="down">
+        <button class="btn btn-quiet btn-tiny" title="Swap with next Friday">▼</button>
+      </form>
+      {% if s.status == 'cancelled' %}
+      <form method="post" action="{{ url_for('mock_edit', mid=s.id) }}">
+        <input type="hidden" name="action" value="uncancel">
+        <button class="btn btn-quiet btn-tiny">restore</button>
+      </form>
+      {% else %}
+      <form method="post" action="{{ url_for('mock_edit', mid=s.id) }}" class="cancel-inline">
+        <input type="hidden" name="action" value="cancel">
+        <input name="reason" placeholder="reason" maxlength="120">
+        <button class="btn btn-quiet btn-tiny">✕</button>
+      </form>
+      {% endif %}
+    </span>
+  {% else %}<span class="dim">—</span>{% endif %}
+{% endmacro %}
+
+{% block content %}
+
+<section class="next-card">
+  <p class="eyebrow">Draft — not public</p>
+  <h1><span class="hl">Mock schedule</span></h1>
+  <p class="dim">Build and edit a draft here without affecting what the lab sees.
+     When you're happy, push it to the live schedule.</p>
+</section>
+
+<section class="panel">
+  <div class="row-forms">
+    <form method="post" action="{{ url_for('mock_generate') }}">
+      <button class="btn">Generate fresh draft</button>
+    </form>
+    <form method="post" action="{{ url_for('mock_copy') }}">
+      <button class="btn btn-quiet">Copy from live schedule</button>
+    </form>
+    {% if has_mock %}
+    <form method="post" action="{{ url_for('mock_clear') }}"
+          onsubmit="return confirm('Discard this draft?')">
+      <button class="btn btn-quiet">Discard draft</button>
+    </form>
+    {% endif %}
+  </div>
+  <p class="dim">"Generate" builds a new draft using the current rotation and
+     priorities. "Copy from live" starts the draft as an exact copy of what's
+     public now, so you can adjust from there.</p>
+</section>
+
+{% if has_mock %}
+<section>
+  <h2>Draft schedule</h2>
+  <table class="sched two-track">
+    <thead><tr><th>Date</th><th>Journal club</th><th>Progress report</th><th>F2F (Monday)</th></tr></thead>
+    <tbody>
+    {% for day, pair in mock_days.items() %}
+      <tr>
+        <td class="mono">{{ day }}</td>
+        <td>{{ cell(pair.jc) }}</td>
+        <td>{{ cell(pair.progress) }}</td>
+        <td>{% if pair.progress and pair.progress.status != 'cancelled' %}<span class="mono dim">{{ pair.monday }}</span><br>{{ pair.progress.speaker_name or '—' }}{% else %}<span class="dim">—</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel admin-box">
+  <h2>Push to live</h2>
+  <p>Publish this draft as the schedule everyone sees. Choose how it applies:</p>
+  <form method="post" action="{{ url_for('mock_push') }}" class="stack"
+        onsubmit="return confirm('Push this draft to the public schedule?')">
+    <fieldset class="event-mode">
+      <label class="radio"><input type="radio" name="mode" value="replace" checked>
+        <strong>Replace</strong> — overwrite all future live slots with the draft</label>
+      <label class="radio"><input type="radio" name="mode" value="fill">
+        <strong>Fill only</strong> — keep existing live slots, add the draft only where live is empty</label>
+    </fieldset>
+    <label class="radio"><input type="checkbox" name="notify" value="yes">
+      Email everyone that the schedule changed</label>
+    <button class="btn">Push draft to live</button>
+  </form>
+  <p class="dim">Past sessions are never touched — only today onward. Pushing
+     clears the draft.</p>
+</section>
+{% else %}
+<p class="dim">No draft yet. Generate one or copy from the live schedule to begin.</p>
+{% endif %}
+
+{% endblock %}

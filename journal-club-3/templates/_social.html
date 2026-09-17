@@ -1,0 +1,30 @@
+{# Reusable upvote + comments block.
+   Call with: {% set tt = 'resource' %}{% set obj = item %}{% include '_social.html' %}
+   `obj` must have .id, .votes, and .comments (list of comment rows). #}
+<div class="social">
+  <form method="post" action="{{ url_for('vote', target_type=tt, target_id=obj.id) }}" class="vote-form">
+    <input name="voter" placeholder="your name" maxlength="80" required>
+    <button class="btn btn-quiet btn-tiny" title="Upvote (one per name)">▲ {{ obj.votes }}</button>
+  </form>
+
+  <details class="comments">
+    <summary>{{ obj.comments|length }} comment{{ '' if obj.comments|length == 1 else 's' }}</summary>
+    {% for c in obj.comments %}
+      <div class="comment">
+        <div class="comment-meta"><strong>{{ c.author }}</strong> · <span class="mono dim">{{ c.created_at|replace('T',' ') }}</span>
+          {% if session.get('admin') %}
+          <form method="post" action="{{ url_for('comment_delete', comment_id=c.id) }}" class="inline-form">
+            <button class="btn btn-quiet btn-tiny" title="Delete comment">✕</button>
+          </form>
+          {% endif %}
+        </div>
+        <div class="comment-body">{{ c.body }}</div>
+      </div>
+    {% endfor %}
+    <form method="post" action="{{ url_for('comment', target_type=tt, target_id=obj.id) }}" class="comment-add">
+      <input name="author" placeholder="your name" maxlength="80" required>
+      <input name="body" placeholder="add a comment…" maxlength="1000" required>
+      <button class="btn btn-quiet btn-tiny">Post</button>
+    </form>
+  </details>
+</div>

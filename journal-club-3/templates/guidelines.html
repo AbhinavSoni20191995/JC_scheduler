@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="next-card">
+  <p class="eyebrow">For presenters</p>
+  <h1><span class="hl">Guidelines</span></h1>
+  <p class="dim">Expected format for journal club and progress report presentations.</p>
+</section>
+
+{% macro show(title, text) %}
+<section class="panel">
+  <h2>{{ title }}</h2>
+  {% if text %}<div class="guideline-text">{{ text|simpletext }}</div>
+  {% else %}<p class="dim">Nothing here yet.</p>{% endif %}
+</section>
+{% endmacro %}
+
+{{ show("Journal club format", jc) }}
+{{ show("Progress report format", progress) }}
+{% if general or session.get('admin') %}{{ show("General", general) }}{% endif %}
+
+{% if session.get('admin') %}
+<section class="panel admin-box">
+  <h2>Edit guidelines <small class="dim">(admin)</small></h2>
+  <form method="post" action="{{ url_for('admin_guidelines') }}" class="stack">
+    <label>Journal club format
+      <textarea name="guidelines_jc" rows="6">{{ jc }}</textarea></label>
+    <label>Progress report format
+      <textarea name="guidelines_progress" rows="6">{{ progress }}</textarea></label>
+    <label>General
+      <textarea name="guidelines_general" rows="4">{{ general }}</textarea></label>
+    <button class="btn">Save guidelines</button>
+  </form>
+  <p class="dim">Tip: leave a blank line between paragraphs. Lines starting with
+     “- ” show as bullet points.</p>
+</section>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="next-card">
+  <p class="eyebrow">Lab tracking</p>
+  <h1><span class="hl">Sequencing projects</span></h1>
+  <p class="dim">Track sequencing runs from planning to delivery — samples, ETA,
+     grant, and whether it's been charged.</p>
+</section>
+
+<div class="seq-summary">
+  {% for s in statuses %}
+    <a class="seq-pill seq-{{ s }}" href="{{ url_for('sequencing', status=s) }}">
+      {{ labels[s] }} <strong>{{ counts[s] }}</strong></a>
+  {% endfor %}
+  {% if uncharged %}<span class="seq-pill seq-uncharged">Not charged <strong>{{ uncharged }}</strong></span>{% endif %}
+</div>
+
+<div class="library-layout">
+
+  <aside class="panel lib-add">
+    <h2>New project</h2>
+    <form method="post" action="{{ url_for('sequencing_add') }}" class="stack">
+      <label>Title <input name="title" required maxlength="200" placeholder="e.g. Alveolar macrophage scRNA-seq"></label>
+      <label>Experiment overview
+        <textarea name="experiment" rows="2" maxlength="1000" placeholder="what's being sequenced and why"></textarea></label>
+      <label>Status
+        <select name="status">
+          {% for s in statuses %}<option value="{{ s }}">{{ labels[s] }}</option>{% endfor %}
+        </select></label>
+      <div class="row-forms">
+        <label>Samples <input name="n_samples" type="number" min="0" style="width:90px"></label>
+        <label>Type <input name="seq_type" maxlength="120" placeholder="scRNA / bulk / ATAC…"></label>
+      </div>
+      <label>Estimated delivery <input name="eta" maxlength="60" placeholder="e.g. 2026-04 or ~6 weeks"></label>
+      <label>Grant <input name="grant_name" maxlength="120" placeholder="which grant it belongs to"></label>
+      <label>Owner <input name="owner" maxlength="80" placeholder="your name"></label>
+      <label class="radio"><input type="checkbox" name="charged" value="yes"> Already charged</label>
+      <label>Note <input name="note" maxlength="500" placeholder="optional"></label>
+      <button class="btn">Add project</button>
+    </form>
+  </aside>
+
+  <main class="lib-main">
+    <form method="get" action="{{ url_for('sequencing') }}" class="row-forms lib-search">
+      <input name="q" value="{{ q }}" placeholder="search title, experiment, grant, owner…">
+      <select name="status" onchange="this.form.submit()">
+        <option value="">All statuses</option>
+        {% for s in statuses %}<option value="{{ s }}" {% if fstatus==s %}selected{% endif %}>{{ labels[s] }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-quiet">Search</button>
+      {% if q or fstatus %}<a class="link" href="{{ url_for('sequencing') }}">clear</a>{% endif %}
+    </form>
+
+    {% if not items %}
+      <p class="dim">{% if q or fstatus %}No projects match.{% else %}No sequencing projects yet — add the first on the left.{% endif %}</p>
+    {% else %}
+      <table class="sched seq-table">
+        <thead><tr>
+          <th>Project</th><th>Status</th><th>Samples</th><th>ETA</th><th>Grant</th><th>Charged</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for it in items %}
+        <tr class="{% if it.status == 'cancelled' %}row-cancelled{% endif %}">
+          <td>
+            <strong>{{ it.title }}</strong>
+            {% if it.seq_type %}<span class="chip chip-once">{{ it.seq_type }}</span>{% endif %}
+            {% if it.experiment %}<div class="dim seq-exp">{{ it.experiment }}</div>{% endif %}
+            {% if it.owner %}<small class="dim">— {{ it.owner }}</small>{% endif %}
+            {% if it.note %}<div class="note">{{ it.note }}</div>{% endif %}
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('sequencing_update', pid=it.id) }}">
+              <input type="hidden" name="field" value="status">
+              <select name="value" onchange="this.form.submit()" class="seq-status-sel seq-sel-{{ it.status }}">
+                {% for s in statuses %}<option value="{{ s }}" {% if it.status==s %}selected{% endif %}>{{ labels[s] }}</option>{% endfor %}
+              </select>
+            </form>
+          </td>
+          <td class="mono">{{ it.n_samples or '—' }}</td>
+          <td class="mono">{{ it.eta or '—' }}</td>
+          <td>{{ it.grant_name or '—' }}</td>
+          <td>
+            <form method="post" action="{{ url_for('sequencing_update', pid=it.id) }}">
+              <input type="hidden" name="field" value="charged">
+              <button class="btn btn-quiet btn-tiny {% if it.charged %}chip-ok{% endif %}"
+                      title="Toggle charged">{{ '✓ charged' if it.charged else 'not charged' }}</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('sequencing_delete', pid=it.id) }}" class="inline-form"
+                  onsubmit="return confirm('Remove this project?')">
+              <input type="hidden" name="owner" value="{{ it.owner }}">
+              <button class="btn btn-quiet btn-tiny" title="Remove (owner or admin)">✕</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <p class="dim">Change status or charged inline. The owner (matching name) or
+         the admin can remove a project.</p>
+    {% endif %}
+  </main>
+
+</div>
+{% endblock %}
